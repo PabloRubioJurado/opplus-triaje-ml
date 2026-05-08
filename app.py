@@ -77,7 +77,7 @@ if st.session_state.df_operativo is not None:
 
     # El Editor de Datos
     df_editado = st.data_editor(
-        df_vista_100[['¿Finalizado?', '¿Reintentar luego?', 'ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
+        df_vista_100[['✅ Gestión Cerrada', '📞 Llamada Fallida (No contesta)', 'ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
         use_container_width=True,
         hide_index=True,
         disabled=['ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']
@@ -86,8 +86,8 @@ if st.session_state.df_operativo is not None:
     # --- BOTÓN DE PROCESAMIENTO ---
     if st.button("🚀 Procesar Cambios y Actualizar los 100 mejores"):
         # Identificar quién se ha marcado
-        finalizados = df_editado[df_editado['¿Finalizado?'] == True]['ID_Cliente'].values
-        reintentos = df_editado[df_editado['¿Reintentar luego?'] == True]['ID_Cliente'].values
+        finalizados = df_editado[df_editado['✅ Gestión Cerrada'] == True]['ID_Cliente'].values
+        reintentos = df_editado[df_editado['📞 Llamada Fallida (No contesta)'] == True]['ID_Cliente'].values
 
         # Actualizar la sesión maestra
         for idx in st.session_state.df_operativo.index:
