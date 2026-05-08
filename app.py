@@ -31,10 +31,10 @@ def ejecutar_ia_triaje(df):
     """Entrena y predice el riesgo basado en el estado actual de los datos"""
     columnas_ia = ['Importe_Deuda', 'Dias_Impago', 'Prioridad_Banco', 'Llamadas_Previas']
     
-    # Simulación de entrenamiento (solo si no viene con etiquetas de mora)
+  # Simulación de entrenamiento (solo si no viene con etiquetas de mora)
     df_entreno = df.copy()
+    
     if 'Llego_a_Mora' not in df_entreno.columns:
-        if 'Llego_a_Mora' not in df_entreno.columns:
         # 1. Calculamos el riesgo base (Días e Importe)
         base_riesgo = (df_entreno['Dias_Impago'] / 90) * 0.6 + \
                       (df_entreno['Importe_Deuda'] / df_entreno['Importe_Deuda'].max()) * 0.4
@@ -42,7 +42,7 @@ def ejecutar_ia_triaje(df):
         # 2. Aplicamos la regla de saturación (3 o más llamadas = hachazo)
         df_entreno['Saturado'] = df_entreno['Llamadas_Previas'] >= 3
         
-        # 3. Si está saturado, restamos 0.7 (cae al final). Si no, restamos solo 0.05 por llamada.
+        # 3. Si está saturado, restamos 0.7. Si no, restamos solo 0.05 por llamada.
         prob = np.where(df_entreno['Saturado'], 
                         base_riesgo - 0.7, 
                         base_riesgo - (df_entreno['Llamadas_Previas'] * 0.05))
@@ -50,6 +50,7 @@ def ejecutar_ia_triaje(df):
         # 4. Marcamos como "Mora" para que el Árbol de Decisión aprenda el patrón
         df_entreno['Llego_a_Mora'] = (prob > 0.5).astype(int)
     
+    # El modelo se entrena FUERA del if para que funcione siempre
     modelo = DecisionTreeClassifier(max_depth=4)
     modelo.fit(df_entreno[columnas_ia], df_entreno['Llego_a_Mora'])
     
