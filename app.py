@@ -34,7 +34,9 @@ def ejecutar_ia_triaje(df):
     # Simulación de entrenamiento (solo si no viene con etiquetas de mora)
     df_entreno = df.copy()
     if 'Llego_a_Mora' not in df_entreno.columns:
-        prob = (df_entreno['Dias_Impago'] / 90) * 0.7 + (df_entreno['Importe_Deuda'] / df_entreno['Importe_Deuda'].max()) * 0.3
+        prob = (df_entreno['Dias_Impago'] / 90) * 0.6 + \
+               (df_entreno['Importe_Deuda'] / df_entreno['Importe_Deuda'].max()) * 0.3 - \
+               (df_entreno['Llamadas_Previas'] * 0.1)
         df_entreno['Llego_a_Mora'] = (prob > 0.55).astype(int)
     
     modelo = DecisionTreeClassifier(max_depth=4)
