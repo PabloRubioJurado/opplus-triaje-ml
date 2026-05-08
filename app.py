@@ -77,7 +77,7 @@ if st.session_state.df_operativo is not None:
     # --- MÉTRICAS GENERALES ---
     st.divider()
     total_datos = len(st.session_state.df_operativo)
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Total Expedientes en Base", f"{total_datos:,}")
     
     pendientes_ahora = len(df_solo_pendientes)
@@ -85,6 +85,11 @@ if st.session_state.df_operativo is not None:
     
     capital_en_vuelo = df_vista_100['Importe_Deuda'].sum()
     c3.metric("Capital en Gestión Actual (Top 100)", f"{capital_en_vuelo:,.0f} €")
+
+    # 4. LA NUEVA MÉTRICA: Lo liberado
+    # Sumamos la deuda de todo lo que ya está marcado como cerrado hoy
+    capital_liberado = st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == True]['Importe_Deuda'].sum()
+    c4.metric("Capital Recuperado/Cerrado", f"{capital_liberado:,.0f} €", delta="¡Buen trabajo!", delta_color="normal")
 
     # --- BANDEJA DE ENTRADA INTELIGENTE ---
     st.subheader(f"Bandeja Operativa: Mostrando los 100 casos con mayor prioridad")
