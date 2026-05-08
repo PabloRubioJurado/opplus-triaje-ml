@@ -54,10 +54,15 @@ def ejecutar_ia_triaje(df):
     modelo = DecisionTreeClassifier(max_depth=4)
     modelo.fit(df_entreno[columnas_ia], df_entreno['Llego_a_Mora'])
     
-    # Generamos el Score de Urgencia actualizado
-    df['Score_Urgencia'] = np.round(modelo.predict_proba(df[columnas_ia])[:, 1] * 100, 2)
-    return df.sort_values(by='Score_Urgencia', ascending=False)
-
+    # Generamos el Score base de la IA
+    prob_ia = modelo.predict_proba(df[columnas_ia])[:, 1] * 100
+    
+    # AJUSTE: Restamos un 1% por cada llamada para que el Score sea dinámico y se mueva siempre
+    df['Score_Urgencia'] = np.round(prob_ia - (df['Llamadas_Previas'] * 1.0), 2)
+    
+    # Ordenamos por Score (de mayor a menor) y por Llamadas (de menor a mayor para desempatar)
+    return df.sort_values(by=['Score_Urgencia', 'Llamadas_Previas'], ascending=[False, True])
+    
 # --- 3. PANEL DE CONTROL Y GESTIÓN ---
 if st.session_state.df_operativo is not None:
     # Ejecutamos la IA sobre toda la base de datos
