@@ -81,15 +81,19 @@ if st.session_state.df_operativo is not None:
     c1.metric("Total Expedientes en Base", f"{total_datos:,}")
     
     pendientes_ahora = len(df_solo_pendientes)
-    c2.metric("Pendientes de Gestión", f"{pendientes_ahora:,}", delta=f"-{total_datos - pendientes_ahora} hoy")
+    gestionados_hoy = total_datos - pendientes_ahora
+    # Solo mostramos el delta si gestionados_hoy es > 0
+    delta_p = f"-{gestionados_hoy} hoy" if gestionados_hoy > 0 else None
+    c2.metric("Pendientes de Gestión", f"{pendientes_ahora:,}", delta=delta_p)
     
     capital_en_vuelo = df_vista_100['Importe_Deuda'].sum()
     c3.metric("Capital en Gestión Actual (Top 100)", f"{capital_en_vuelo:,.0f} €")
 
-    # 4. LA NUEVA MÉTRICA: Lo liberado
-    # Sumamos la deuda de todo lo que ya está marcado como cerrado hoy
+    # 4. Capital Liberado (La flecha y el mensaje solo aparecen si hay dinero recuperado)
     capital_liberado = st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == True]['Importe_Deuda'].sum()
-    c4.metric("Capital Recuperado/Cerrado", f"{capital_liberado:,.0f} €", delta="¡Buen trabajo!", delta_color="normal")
+    # Solo mostramos "¡Buen trabajo!" si hemos recuperado algo > 0
+    delta_exito = "¡Buen trabajo!" if capital_liberado > 0 else None
+    c4.metric("Capital Recuperado/Cerrado", f"{capital_liberado:,.0f} €", delta=delta_exito, delta_color="normal")
 
     # --- BANDEJA DE ENTRADA INTELIGENTE ---
     st.subheader(f"Bandeja Operativa: Mostrando los 100 casos con mayor prioridad")
