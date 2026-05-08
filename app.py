@@ -98,24 +98,36 @@ if st.session_state.df_operativo is not None:
     )
 
     # --- BOTÓN DE PROCESAMIENTO ---
-    if st.button("🚀 Procesar Cambios y Actualizar los 100 mejores"):
-        # Identificar quién se ha marcado
-        finalizados = df_editado[df_editado['✅ Gestión Cerrada'] == True]['ID_Cliente'].values
-        reintentos = df_editado[df_editado['📞 Llamada Fallida (No contesta)'] == True]['ID_Cliente'].values
-
-        # Actualizar la sesión maestra
-        for idx in st.session_state.df_operativo.index:
-            cid = st.session_state.df_operativo.at[idx, 'ID_Cliente']
+   # --- BOTÓN DE ACTUALIZACIÓN ---
+    # Lo ponemos al final de la columna o debajo de la tabla
+    if st.button("🚀 Procesar Cambios y Actualizar"):
+        # 1. El Spinner hace que aparezca una ruedita de carga muy profesional
+        with st.spinner("Sincronizando con el servidor de OPPLUS y recalculando triaje..."):
             
-            if cid in finalizados:
-                st.session_state.df_operativo.at[idx, 'Gestionado_Hoy'] = True
-            
-            if cid in reintentos:
-                st.session_state.df_operativo.at[idx, 'Llamadas_Previas'] += 1
-                # Al sumar una llamada, el Score de Urgencia cambiará en la siguiente vuelta
+            # Identificamos qué filas ha marcado el gestor en la tabla
+            finalizados = df_editado[df_editado['✅ Gestión Cerrada'] == True]['ID_Cliente'].values
+            reintentos = df_editado[df_editado['📞 Llamada Fallida (No contesta)'] == True]['ID_Cliente'].values
 
-        st.success("Base de datos sincronizada. Trayendo nuevos casos a la bandeja...")
+            # Aplicamos los cambios a nuestra base de datos "maestra"
+            for idx in st.session_state.df_operativo.index:
+                cid = st.session_state.df_operativo.at[idx, 'ID_Cliente']
+                
+                if cid in finalizados:
+                    st.session_state.df_operativo.at[idx, 'Gestionado_Hoy'] = True
+                
+                if cid in reintentos:
+                    st.session_state.df_operativo.at[idx, 'Llamadas_Previas'] += 1
+
+            # 2. Mostramos una notificación elegante en la esquina
+            st.toast("Bandeja actualizada. Trayendo nuevos casos críticos...", icon="✅")
+            
+            # 3. Importante: Pausa de 2 segundos para que el usuario vea que algo ha pasado
+            import time
+            time.sleep(2)
+
+        # 4. El Rerun limpia la pantalla y vuelve a ejecutar la IA con los datos nuevos
         st.rerun()
 
 else:
-    st.info("ℹ️ Cargue el archivo CSV para procesar el triaje inteligente de la jornada.")
+    # Este 'else' es el que cierra el 'if archivo_subido is not None'
+    st.info("ℹ️ Cargue el archivo CSV para que el Equipo Houston procese el triaje de la jornada.")
