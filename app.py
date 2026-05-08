@@ -72,8 +72,8 @@ if st.session_state.df_operativo is not None:
     st.write(f"ℹ️ El motor de IA ha seleccionado estos 100 expedientes de un total de {pendientes_ahora:,} casos disponibles.")
 
     # Añadimos columnas de acción al editor
-    df_vista_100['¿Finalizado?'] = False
-    df_vista_100['¿Reintentar luego?'] = False
+    df_vista_100['✅ Gestión Cerrada'] = False
+    df_vista_100['📞 Llamada Fallida (No contesta)'] = False
 
     # El Editor de Datos
     df_editado = st.data_editor(
