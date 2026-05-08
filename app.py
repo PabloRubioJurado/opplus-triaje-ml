@@ -48,19 +48,36 @@ if archivo_subido is not None:
         dinero_riesgo = df_final.head(casos_criticos)['Importe_Deuda'].sum()
         col3.metric("Capital en Máximo Riesgo", f"{dinero_riesgo:,.0f} €", "Protección de Activos")
 
-        # --- TABLA DE TRABAJO ---
-        st.subheader("Bandeja de Trabajo Priorizada")
-        st.markdown("Lista de clientes ordenada por riesgo de impago calculado por la IA:")
+        # --- TABLA DE TRABAJO INTERACTIVA ---
+        st.subheader("Bandeja de Trabajo Activa")
+        st.markdown("Gestores: Marquen la casilla **'Gestionado'** tras finalizar la llamada con el cliente.")
         
-        st.dataframe(
-            df_final[['ID_Cliente', 'Score_Urgencia', 'Dias_Impago', 'Importe_Deuda', 'Prioridad_Banco']], 
+        # 1. Añadimos la columna interactiva de "Check" al principio
+        if 'Gestionado' not in df_final.columns:
+            df_final.insert(0, 'Gestionado', False)
+
+        # 2. Usamos data_editor en lugar de dataframe para permitir interacción
+        df_editado = st.data_editor(
+            df_final[['Gestionado', 'ID_Cliente', 'Score_Urgencia', 'Dias_Impago', 'Importe_Deuda', 'Prioridad_Banco']], 
             use_container_width=True,
-            hide_index=True
+            hide_index=True,
+            # Bloqueamos todas las columnas EXCEPTO la de 'Gestionado'
+            disabled=['ID_Cliente', 'Score_Urgencia', 'Dias_Impago', 'Importe_Deuda', 'Prioridad_Banco']
         )
         
-        if st.button("Exportar lista de contacto a los gestores"):
-            # Sin globos, solo confirmación corporativa
-            st.success("Lista enviada correctamente a los sistemas de centralita de GYAR.")
+        # 3. Calculamos cuántos han marcado y ponemos una barra de progreso
+        llamadas_hechas = df_editado['Gestionado'].sum()
+        total_llamadas = len(df_editado)
+        
+        # Evitamos división por cero por si acaso
+        if total_llamadas > 0:
+            progreso = llamadas_hechas / total_llamadas
+            st.progress(progreso, text=f"📊 Progreso de la jornada: {llamadas_hechas} de {total_llamadas} casos gestionados")
+        
+        # 4. El botón de exportar ahora exporta solo lo que falta por llamar
+        if st.button("Sincronizar progreso con centralita"):
+            casos_restantes = total_llamadas - llamadas_hechas
+            st.success(f"Progreso guardado. Quedan {casos_restantes} casos pendientes en la cola.")
 
     else:
         st.error(f"Error de formato: El archivo debe contener exactamente estas columnas: {columnas_requeridas}")
