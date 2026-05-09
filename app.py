@@ -81,8 +81,6 @@ def ejecutar_ia_triaje(df):
     return df.sort_values(by=['Score_Urgencia', 'Llamadas_Previas'], ascending=[False, True])
     
 # --- 3. PANEL DE CONTROL Y GESTIÓN ---
-if st.session_state.df_operativo is not None:
-    # --- BARRA LATERAL PARA GESTIÓN DE ARCHIVOS ---
     # --- BARRA LATERAL CON LOGIN Y EXPORTACIÓN ---
 with st.sidebar:
     if st.session_state.usuario_actual is None:
