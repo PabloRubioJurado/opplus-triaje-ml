@@ -88,6 +88,25 @@ if st.session_state.df_operativo is not None:
         else:
             # Si no hay datos, mostramos un mensaje amigable en lugar de un error
             st.warning("⚠️ Debe cargar un archivo CSV en el panel principal para habilitar la exportación.")
+    # --- CONTROL OPERATIVO Y PRODUCTIVIDAD ---
+        st.divider()
+        st.header("📊 Control Operativo")
+        
+        # Simulador para calcular el KPI de la Diapositiva 7
+        cargas_trabajo = st.slider("Cargas de trabajo activas (Gestores)", min_value=1, max_value=50, value=35)
+        
+        if st.session_state.df_operativo is not None:
+            pendientes = len(st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == False])
+            
+            # KPI: Expedientes / Gestor
+            productividad_kpi = pendientes // cargas_trabajo
+            
+            st.metric("KPI Productividad Estimada", f"{productividad_kpi} exp/gestor")
+            
+            if productividad_kpi > 120:
+                st.warning("⚠️ Aviso: La carga por gestor es alta. Riesgo de no cumplir ANS de 60 días.")
+            else:
+                st.success("✅ Carga balanceada y distribuida inteligentemente.")
     # Ejecutamos la IA sobre toda la base de datos
     df_maestro = ejecutar_ia_triaje(st.session_state.df_operativo)
     
