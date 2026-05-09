@@ -79,7 +79,7 @@ if st.session_state.df_operativo is not None:
             st.download_button(
                 label="📥 Descargar Progreso Actualizado (CSV)",
                 data=csv_data,
-                file_name="progreso_triaje_houston.csv",
+                file_name="progreso_houston.csv",
                 mime="text/csv",
                 help="Descarga la base de datos completa con los contadores de llamadas y estados actualizados."
             )
