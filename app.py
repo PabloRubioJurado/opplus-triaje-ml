@@ -65,6 +65,22 @@ def ejecutar_ia_triaje(df):
     
 # --- 3. PANEL DE CONTROL Y GESTIÓN ---
 if st.session_state.df_operativo is not None:
+    # 1. ESTO VA PRIMERO: La barra lateral siempre visible
+    with st.sidebar:
+        st.header("💾 Gestión de Progreso")
+        st.write("Use esta opción para guardar su trabajo.")
+        
+        # Preparamos el CSV (esto es rápido, no frena la app)
+        csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
+        
+        st.download_button(
+            label="📥 Descargar Progreso (CSV)",
+            data=csv_data,
+            file_name="progreso_houston.csv",
+            mime="text/csv",
+            key="download-csv" # Añadimos una clave para que Streamlit no se líe
+        )
+        st.divider()
     # Ejecutamos la IA sobre toda la base de datos
     df_maestro = ejecutar_ia_triaje(st.session_state.df_operativo)
     
