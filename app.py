@@ -63,8 +63,7 @@ def ejecutar_ia_triaje(df):
     # Ordenamos por Score (de mayor a menor) y por Llamadas (de menor a mayor para desempatar)
     return df.sort_values(by=['Score_Urgencia', 'Llamadas_Previas'], ascending=[False, True])
     
-# --- 3. PANEL DE CONTROL Y GESTIÓN ---
-    # --- BARRA LATERAL CON LOGIN Y EXPORTACIÓN ---
+# --- BARRA LATERAL CON LOGIN Y EXPORTACIÓN ---
 with st.sidebar:
     if st.session_state.usuario_actual is None:
         st.header("🔐 Acceso al Sistema")
@@ -98,6 +97,7 @@ if st.session_state.usuario_actual is None:
     st.info("👈 Por favor, inicie sesión en el menú lateral para acceder a su panel.")
     st.stop()
 
+
 # --- 1. CARGA DE EXPEDIENTES (SOLO DIRECTOR) ---
 if st.session_state.df_operativo is None:
     if st.session_state.rol_actual == "Director":
@@ -114,10 +114,11 @@ if st.session_state.df_operativo is None:
             st.rerun()
     else:
         st.warning("⏳ Esperando a que el Director de Operaciones cargue la base de datos del día...")
-        st.stop()
+    # st.stop() aquí es vital, para que no intente ejecutar lo de abajo si no hay datos.
+    st.stop() 
 
-            
-    # --- 3. PANEL DE CONTROL Y GESTIÓN ---
+
+# --- 3. PANEL DE CONTROL Y GESTIÓN ---
 if st.session_state.df_operativo is not None:
     # Calculamos la IA para todos
     df_maestro = ejecutar_ia_triaje(st.session_state.df_operativo)
