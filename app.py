@@ -114,7 +114,7 @@ if st.session_state.df_operativo is not None:
     # --- BOTÓN DE PROCESAMIENTO ---
    # --- BOTÓN DE ACTUALIZACIÓN ---
     # Lo ponemos al final de la columna o debajo de la tabla
-    if st.button("🚀 Procesar Cambios y Actualizar"):
+    if st.button("Procesar Cambios y Actualizar"):
         # 1. El Spinner hace que aparezca una ruedita de carga muy profesional
         with st.spinner("Sincronizando con el servidor de OPPLUS y recalculando triaje..."):
             
@@ -145,3 +145,24 @@ if st.session_state.df_operativo is not None:
 else:
     # Este 'else' es el que cierra el 'if archivo_subido is not None'
     st.info("ℹ️ Cargue el archivo CSV para que el Equipo Houston procese el triaje de la jornada.")
+
+# --- BARRA LATERAL PARA GESTIÓN DE ARCHIVOS ---
+    with st.sidebar:
+        st.header("💾 Gestión de Progreso")
+        st.write("Use esta opción para guardar su trabajo antes de cerrar la sesión.")
+        
+        # Convertimos el DataFrame actual (con llamadas y estados) a CSV
+        # El .encode('utf-8') es vital para que los nombres con tildes no se rompan
+        csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
+        
+        # El botón de descarga oficial de Streamlit
+        st.download_button(
+            label="📥 Descargar Progreso Actualizado (CSV)",
+            data=csv_data,
+            file_name="progreso_triaje_houston.csv",
+            mime="text/csv",
+            help="Descarga la base de datos completa con los contadores de llamadas y estados actualizados."
+        )
+        
+        st.divider()
+        st.info("💡 Consejo: Descargue su progreso cada 300 expedientes para tener una copia de seguridad.")
