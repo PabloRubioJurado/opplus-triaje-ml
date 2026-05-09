@@ -25,23 +25,6 @@ if 'usuario_actual' not in st.session_state:
 if 'rol_actual' not in st.session_state:
     st.session_state.rol_actual = None
     
-# --- 1. CARGA DE EXPEDIENTES (SOLO DIRECTOR) ---
-if st.session_state.df_operativo is None:
-    if st.session_state.rol_actual == "Director":
-        st.markdown("### 1. Inicialización de la Jornada")
-        archivo_subido = st.file_uploader("Suba el CSV con la base de datos completa", type=["csv"])
-
-        if archivo_subido is not None:
-            df_inicial = pd.read_csv(archivo_subido)
-            if 'Gestionado_Hoy' not in df_inicial.columns:
-                df_inicial['Gestionado_Hoy'] = False  
-            if 'Llamadas_Previas' not in df_inicial.columns:
-                df_inicial['Llamadas_Previas'] = 0
-            st.session_state.df_operativo = df_inicial
-            st.rerun()
-    else:
-        st.warning("⏳ Esperando a que el Director de Operaciones cargue la base de datos del día...")
-        st.stop()
 
 # --- 2. MOTOR DE IA (RE-TRIADORA) ---
 def ejecutar_ia_triaje(df):
@@ -114,6 +97,25 @@ with st.sidebar:
 if st.session_state.usuario_actual is None:
     st.info("👈 Por favor, inicie sesión en el menú lateral para acceder a su panel.")
     st.stop()
+
+# --- 1. CARGA DE EXPEDIENTES (SOLO DIRECTOR) ---
+if st.session_state.df_operativo is None:
+    if st.session_state.rol_actual == "Director":
+        st.markdown("### 1. Inicialización de la Jornada")
+        archivo_subido = st.file_uploader("Suba el CSV con la base de datos completa", type=["csv"])
+
+        if archivo_subido is not None:
+            df_inicial = pd.read_csv(archivo_subido)
+            if 'Gestionado_Hoy' not in df_inicial.columns:
+                df_inicial['Gestionado_Hoy'] = False  
+            if 'Llamadas_Previas' not in df_inicial.columns:
+                df_inicial['Llamadas_Previas'] = 0
+            st.session_state.df_operativo = df_inicial
+            st.rerun()
+    else:
+        st.warning("⏳ Esperando a que el Director de Operaciones cargue la base de datos del día...")
+        st.stop()
+
             
     # --- 3. PANEL DE CONTROL Y GESTIÓN ---
 if st.session_state.df_operativo is not None:
