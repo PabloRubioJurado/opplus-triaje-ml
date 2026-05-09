@@ -1,17 +1,14 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import time
 from sklearn.tree import DecisionTreeClassifier
 
 # Configuración profesional
 st.set_page_config(page_title="OPPLUS - Triaje Inteligente", layout="wide")
 st.title("Sistema de Triaje GYAR - Equipo Houston")
 
-# --- PERSISTENCIA DE DATOS EN LA SESIÓN ---
-if 'df_operativo' not in st.session_state:
-    st.session_state.df_operativo = None
-
-# --- NUEVO: SISTEMA DE USUARIOS SIMULADO ---
+# --- SISTEMA DE USUARIOS SIMULADO ---
 USUARIOS = {
     "director": {"pwd": "1234", "rol": "Director"},
     "gestor1": {"pwd": "1234", "rol": "Gestor 1", "rango": (0, 100)},
@@ -20,25 +17,31 @@ USUARIOS = {
     "gestor4": {"pwd": "1234", "rol": "Gestor 4", "rango": (300, 400)}
 }
 
+# --- PERSISTENCIA DE DATOS EN LA SESIÓN ---
+if 'df_operativo' not in st.session_state:
+    st.session_state.df_operativo = None
 if 'usuario_actual' not in st.session_state:
     st.session_state.usuario_actual = None
 if 'rol_actual' not in st.session_state:
     st.session_state.rol_actual = None
-
-# --- 1. CARGA DE EXPEDIENTES ---
-st.markdown("### 1. Carga de Expedientes Operativos")
-archivo_subido = st.file_uploader("Suba el CSV con la base de datos completa", type=["csv"])
-
-if archivo_subido is not None and st.session_state.df_operativo is None:
-    df_inicial = pd.read_csv(archivo_subido)
     
-    # Inicializamos columnas de control si no existen
-    if 'Gestionado_Hoy' not in df_inicial.columns:
-        df_inicial['Gestionado_Hoy'] = False  # Para quitar de la lista definitiva
-    if 'Llamadas_Previas' not in df_inicial.columns:
-        df_inicial['Llamadas_Previas'] = 0
-        
-    st.session_state.df_operativo = df_inicial
+# --- 1. CARGA DE EXPEDIENTES (SOLO DIRECTOR) ---
+if st.session_state.df_operativo is None:
+    if st.session_state.rol_actual == "Director":
+        st.markdown("### 1. Inicialización de la Jornada")
+        archivo_subido = st.file_uploader("Suba el CSV con la base de datos completa", type=["csv"])
+
+        if archivo_subido is not None:
+            df_inicial = pd.read_csv(archivo_subido)
+            if 'Gestionado_Hoy' not in df_inicial.columns:
+                df_inicial['Gestionado_Hoy'] = False  
+            if 'Llamadas_Previas' not in df_inicial.columns:
+                df_inicial['Llamadas_Previas'] = 0
+            st.session_state.df_operativo = df_inicial
+            st.rerun()
+    else:
+        st.warning("⏳ Esperando a que el Director de Operaciones cargue la base de datos del día...")
+        st.stop()
 
 # --- 2. MOTOR DE IA (RE-TRIADORA) ---
 def ejecutar_ia_triaje(df):
@@ -80,106 +83,104 @@ def ejecutar_ia_triaje(df):
 # --- 3. PANEL DE CONTROL Y GESTIÓN ---
 if st.session_state.df_operativo is not None:
     # --- BARRA LATERAL PARA GESTIÓN DE ARCHIVOS ---
-    with st.sidebar:
-        st.header("💾 Gestión de Progreso")
+    # --- BARRA LATERAL CON LOGIN Y EXPORTACIÓN ---
+with st.sidebar:
+    if st.session_state.usuario_actual is None:
+        st.header("🔐 Acceso al Sistema")
+        user_input = st.text_input("Usuario")
+        pass_input = st.text_input("Contraseña", type="password")
         
-        # Solo mostramos el botón si la base de datos ya tiene información
+        if st.button("Iniciar Sesión"):
+            if user_input in USUARIOS and USUARIOS[user_input]["pwd"] == pass_input:
+                st.session_state.usuario_actual = user_input
+                st.session_state.rol_actual = USUARIOS[user_input]["rol"]
+                st.success("Acceso concedido")
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error("Credenciales incorrectas")
+    else:
+        st.header(f"👤 {st.session_state.rol_actual}")
+        if st.button("Cerrar Sesión"):
+            st.session_state.usuario_actual = None
+            st.session_state.rol_actual = None
+            st.rerun()
+            
+        st.divider()
+        st.header("💾 Gestión de Progreso")
         if st.session_state.df_operativo is not None:
-            st.write("Use esta opción para guardar su trabajo antes de cerrar la sesión.")
-            
-            # Preparamos los datos para la descarga
             csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
+            st.download_button(label="📥 Descargar Progreso", data=csv_data, file_name="progreso_global.csv", mime="text/csv")
+
+# --- BLOQUEO SI NO HAY USUARIO ---
+if st.session_state.usuario_actual is None:
+    st.info("👈 Por favor, inicie sesión en el menú lateral para acceder a su panel.")
+    st.stop()
             
-            st.download_button(
-                label="📥 Descargar Progreso Actualizado (CSV)",
-                data=csv_data,
-                file_name="progreso_houston.csv",
-                mime="text/csv",
-                help="Descarga la base de datos completa con los contadores de llamadas y estados actualizados."
-            )
-            st.divider()
-            st.info("💡 Consejo: Descargue su progreso cada 300 expedientes para tener una copia de seguridad.")
-        else:
-            # Si no hay datos, mostramos un mensaje amigable en lugar de un error
-            st.warning("⚠️ Debe cargar un archivo CSV en el panel principal para habilitar la exportación.")
-            
-    # Ejecutamos la IA sobre toda la base de datos
+    # --- 3. PANEL DE CONTROL Y GESTIÓN ---
+if st.session_state.df_operativo is not None:
+    # Calculamos la IA para todos
     df_maestro = ejecutar_ia_triaje(st.session_state.df_operativo)
-    
-    # Filtramos para la vista: Solo los NO terminados
     df_solo_pendientes = df_maestro[df_maestro['Gestionado_Hoy'] == False]
-    
-    # Tomamos los 100 más críticos para mostrar
-    df_vista_100 = df_solo_pendientes.head(100).copy()
-
-    # --- MÉTRICAS GENERALES ---
-    st.divider()
     total_datos = len(st.session_state.df_operativo)
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Total Expedientes en Base", f"{total_datos:,}")
-    
     pendientes_ahora = len(df_solo_pendientes)
-    gestionados_hoy = total_datos - pendientes_ahora
-    # Solo mostramos el delta si gestionados_hoy es > 0
-    delta_p = f"-{gestionados_hoy} hoy" if gestionados_hoy > 0 else None
-    c2.metric("Pendientes de Gestión", f"{pendientes_ahora:,}", delta=delta_p)
-    
-    capital_en_vuelo = df_vista_100['Importe_Deuda'].sum()
-    c3.metric("Capital en Gestión Actual (Top 100)", f"{capital_en_vuelo:,.0f} €")
 
-    # 4. Capital Liberado (La flecha y el mensaje solo aparecen si hay dinero recuperado)
-    capital_liberado = st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == True]['Importe_Deuda'].sum()
-    # Solo mostramos "¡Buen trabajo!" si hemos recuperado algo > 0
-    delta_exito = "¡Buen trabajo!" if capital_liberado > 0 else None
-    c4.metric("Capital Recuperado/Cerrado", f"{capital_liberado:,.0f} €", delta=delta_exito, delta_color="normal")
+    # ==========================================
+    # VISTA 1: EL DIRECTOR
+    # ==========================================
+    if st.session_state.rol_actual == "Director":
+        st.subheader("📊 Dashboard Central de Supervisión")
+        st.divider()
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Total Expedientes en Base", f"{total_datos:,}")
+        
+        gestionados_hoy = total_datos - pendientes_ahora
+        delta_p = f"-{gestionados_hoy} hoy" if gestionados_hoy > 0 else None
+        c2.metric("Pendientes de Gestión", f"{pendientes_ahora:,}", delta=delta_p)
+        
+        capital_en_vuelo = df_solo_pendientes['Importe_Deuda'].sum()
+        c3.metric("Riesgo Total Vivo", f"{capital_en_vuelo:,.0f} €")
 
-    # --- BANDEJA DE ENTRADA INTELIGENTE ---
-    st.subheader(f"Bandeja Operativa: Mostrando los 100 casos con mayor prioridad")
-    st.write(f"ℹ️ El motor de IA ha seleccionado estos 100 expedientes de un total de {pendientes_ahora:,} casos disponibles.")
+        capital_liberado = st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == True]['Importe_Deuda'].sum()
+        delta_exito = "¡Buen trabajo!" if capital_liberado > 0 else None
+        c4.metric("Capital Recuperado/Cerrado", f"{capital_liberado:,.0f} €", delta=delta_exito, delta_color="normal")
+        st.info("ℹ️ Los gestores están trabajando en sus respectivos tramos. Pulse descargar en el lateral para auditar el CSV.")
 
-    # Añadimos columnas de acción al editor
-    df_vista_100['✅ Gestión Cerrada'] = False
-    df_vista_100['📞 Llamada Fallida (No contesta)'] = False
+    # ==========================================
+    # VISTA 2: LOS GESTORES
+    # ==========================================
+    else:
+        rango_inicio, rango_fin = USUARIOS[st.session_state.usuario_actual]["rango"]
+        st.subheader(f"💼 Bandeja Operativa Asignada: Tramos del {rango_inicio} al {rango_fin}")
+        
+        # Filtramos la tabla para que este gestor solo vea su tramo
+        df_vista_mia = df_solo_pendientes.iloc[rango_inicio:rango_fin].copy()
+        
+        if len(df_vista_mia) == 0:
+            st.success("🎉 ¡No hay casos pendientes en su tramo! Espere reasignación.")
+        else:
+            df_vista_mia['✅ Gestión Cerrada'] = False
+            df_vista_mia['📞 Llamada Fallida (No contesta)'] = False
 
-    # El Editor de Datos
-    df_editado = st.data_editor(
-        df_vista_100[['✅ Gestión Cerrada', '📞 Llamada Fallida (No contesta)', 'ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
-        use_container_width=True,
-        hide_index=True,
-        disabled=['ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']
-    )
+            df_editado = st.data_editor(
+                df_vista_mia[['✅ Gestión Cerrada', '📞 Llamada Fallida (No contesta)', 'ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
+                use_container_width=True,
+                hide_index=True,
+                disabled=['ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']
+            )
 
-    # --- BOTÓN DE PROCESAMIENTO ---
-   # --- BOTÓN DE ACTUALIZACIÓN ---
-    # Lo ponemos al final de la columna o debajo de la tabla
-    if st.button("Procesar Cambios y Actualizar"):
-        # 1. El Spinner hace que aparezca una ruedita de carga muy profesional
-        with st.spinner("Sincronizando con el servidor de OPPLUS y recalculando triaje..."):
-            
-            # Identificamos qué filas ha marcado el gestor en la tabla
-            finalizados = df_editado[df_editado['✅ Gestión Cerrada'] == True]['ID_Cliente'].values
-            reintentos = df_editado[df_editado['📞 Llamada Fallida (No contesta)'] == True]['ID_Cliente'].values
+            if st.button("🚀 Procesar Cambios y Actualizar Mi Bandeja"):
+                with st.spinner("Sincronizando con el servidor central de OPPLUS..."):
+                    finalizados = df_editado[df_editado['✅ Gestión Cerrada'] == True]['ID_Cliente'].values
+                    reintentos = df_editado[df_editado['📞 Llamada Fallida (No contesta)'] == True]['ID_Cliente'].values
 
-            # Aplicamos los cambios a nuestra base de datos "maestra"
-            for idx in st.session_state.df_operativo.index:
-                cid = st.session_state.df_operativo.at[idx, 'ID_Cliente']
-                
-                if cid in finalizados:
-                    st.session_state.df_operativo.at[idx, 'Gestionado_Hoy'] = True
-                
-                if cid in reintentos:
-                    st.session_state.df_operativo.at[idx, 'Llamadas_Previas'] += 1
+                    for idx in st.session_state.df_operativo.index:
+                        cid = st.session_state.df_operativo.at[idx, 'ID_Cliente']
+                        if cid in finalizados:
+                            st.session_state.df_operativo.at[idx, 'Gestionado_Hoy'] = True
+                        if cid in reintentos:
+                            st.session_state.df_operativo.at[idx, 'Llamadas_Previas'] += 1
 
-            # 2. Mostramos una notificación elegante en la esquina
-            st.toast("Bandeja actualizada. Trayendo nuevos casos críticos...", icon="✅")
-            
-            # 3. Importante: Pausa de 2 segundos para que el usuario vea que algo ha pasado
-            import time
-            time.sleep(2)
-
-        # 4. El Rerun limpia la pantalla y vuelve a ejecutar la IA con los datos nuevos
-        st.rerun()
-
-else:
-    # Este 'else' es el que cierra el 'if archivo_subido is not None'
-    st.info("ℹ️ Cargue el archivo CSV para que el Equipo Houston procese el triaje de la jornada.")
+                    st.toast("Bandeja actualizada. Trayendo nuevos casos...", icon="✅")
+                    time.sleep(2)
+                st.rerun()
