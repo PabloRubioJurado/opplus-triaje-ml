@@ -149,20 +149,23 @@ else:
 # --- BARRA LATERAL PARA GESTIÓN DE ARCHIVOS ---
     with st.sidebar:
         st.header("💾 Gestión de Progreso")
-        st.write("Use esta opción para guardar su trabajo antes de cerrar la sesión.")
         
-        # Convertimos el DataFrame actual (con llamadas y estados) a CSV
-        # El .encode('utf-8') es vital para que los nombres con tildes no se rompan
-        csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
-        
-        # El botón de descarga oficial de Streamlit
-        st.download_button(
-            label="📥 Descargar Progreso Actualizado (CSV)",
-            data=csv_data,
-            file_name="progreso_triaje_houston.csv",
-            mime="text/csv",
-            help="Descarga la base de datos completa con los contadores de llamadas y estados actualizados."
-        )
-        
-        st.divider()
-        st.info("💡 Consejo: Descargue su progreso cada 300 expedientes para tener una copia de seguridad.")
+        # Solo mostramos el botón si la base de datos ya tiene información
+        if st.session_state.df_operativo is not None:
+            st.write("Use esta opción para guardar su trabajo antes de cerrar la sesión.")
+            
+            # Preparamos los datos para la descarga
+            csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
+            
+            st.download_button(
+                label="📥 Descargar Progreso Actualizado (CSV)",
+                data=csv_data,
+                file_name="progreso_triaje_houston.csv",
+                mime="text/csv",
+                help="Descarga la base de datos completa con los contadores de llamadas y estados actualizados."
+            )
+            st.divider()
+            st.info("💡 Consejo: Descargue su progreso cada 300 expedientes para tener una copia de seguridad.")
+        else:
+            # Si no hay datos, mostramos un mensaje amigable en lugar de un error
+            st.warning("⚠️ Debe cargar un archivo CSV en el panel principal para habilitar la exportación.")
