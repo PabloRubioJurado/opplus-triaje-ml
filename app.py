@@ -11,6 +11,20 @@ st.title("Sistema de Triaje GYAR - Equipo Houston")
 if 'df_operativo' not in st.session_state:
     st.session_state.df_operativo = None
 
+# --- NUEVO: SISTEMA DE USUARIOS SIMULADO ---
+USUARIOS = {
+    "director": {"pwd": "1234", "rol": "Director"},
+    "gestor1": {"pwd": "1234", "rol": "Gestor 1", "rango": (0, 100)},
+    "gestor2": {"pwd": "1234", "rol": "Gestor 2", "rango": (100, 200)},
+    "gestor3": {"pwd": "1234", "rol": "Gestor 3", "rango": (200, 300)},
+    "gestor4": {"pwd": "1234", "rol": "Gestor 4", "rango": (300, 400)}
+}
+
+if 'usuario_actual' not in st.session_state:
+    st.session_state.usuario_actual = None
+if 'rol_actual' not in st.session_state:
+    st.session_state.rol_actual = None
+
 # --- 1. CARGA DE EXPEDIENTES ---
 st.markdown("### 1. Carga de Expedientes Operativos")
 archivo_subido = st.file_uploader("Suba el CSV con la base de datos completa", type=["csv"])
