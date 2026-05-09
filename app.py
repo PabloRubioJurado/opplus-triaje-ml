@@ -65,22 +65,29 @@ def ejecutar_ia_triaje(df):
     
 # --- 3. PANEL DE CONTROL Y GESTIÓN ---
 if st.session_state.df_operativo is not None:
-    # 1. ESTO VA PRIMERO: La barra lateral siempre visible
+    # --- BARRA LATERAL PARA GESTIÓN DE ARCHIVOS ---
     with st.sidebar:
         st.header("💾 Gestión de Progreso")
-        st.write("Use esta opción para guardar su trabajo.")
         
-        # Preparamos el CSV (esto es rápido, no frena la app)
-        csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
-        
-        st.download_button(
-            label="📥 Descargar Progreso (CSV)",
-            data=csv_data,
-            file_name="progreso_houston.csv",
-            mime="text/csv",
-            key="download-csv" # Añadimos una clave para que Streamlit no se líe
-        )
-        st.divider()
+        # Solo mostramos el botón si la base de datos ya tiene información
+        if st.session_state.df_operativo is not None:
+            st.write("Use esta opción para guardar su trabajo antes de cerrar la sesión.")
+            
+            # Preparamos los datos para la descarga
+            csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
+            
+            st.download_button(
+                label="📥 Descargar Progreso Actualizado (CSV)",
+                data=csv_data,
+                file_name="progreso_triaje_houston.csv",
+                mime="text/csv",
+                help="Descarga la base de datos completa con los contadores de llamadas y estados actualizados."
+            )
+            st.divider()
+            st.info("💡 Consejo: Descargue su progreso cada 300 expedientes para tener una copia de seguridad.")
+        else:
+            # Si no hay datos, mostramos un mensaje amigable en lugar de un error
+            st.warning("⚠️ Debe cargar un archivo CSV en el panel principal para habilitar la exportación.")
     # Ejecutamos la IA sobre toda la base de datos
     df_maestro = ejecutar_ia_triaje(st.session_state.df_operativo)
     
@@ -161,27 +168,3 @@ if st.session_state.df_operativo is not None:
 else:
     # Este 'else' es el que cierra el 'if archivo_subido is not None'
     st.info("ℹ️ Cargue el archivo CSV para que el Equipo Houston procese el triaje de la jornada.")
-
-# --- BARRA LATERAL PARA GESTIÓN DE ARCHIVOS ---
-    with st.sidebar:
-        st.header("💾 Gestión de Progreso")
-        
-        # Solo mostramos el botón si la base de datos ya tiene información
-        if st.session_state.df_operativo is not None:
-            st.write("Use esta opción para guardar su trabajo antes de cerrar la sesión.")
-            
-            # Preparamos los datos para la descarga
-            csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
-            
-            st.download_button(
-                label="📥 Descargar Progreso Actualizado (CSV)",
-                data=csv_data,
-                file_name="progreso_triaje_houston.csv",
-                mime="text/csv",
-                help="Descarga la base de datos completa con los contadores de llamadas y estados actualizados."
-            )
-            st.divider()
-            st.info("💡 Consejo: Descargue su progreso cada 300 expedientes para tener una copia de seguridad.")
-        else:
-            # Si no hay datos, mostramos un mensaje amigable en lugar de un error
-            st.warning("⚠️ Debe cargar un archivo CSV en el panel principal para habilitar la exportación.")
