@@ -159,7 +159,7 @@ if st.session_state.df_operativo is not None:
         df_vista_mia = df_solo_pendientes.iloc[rango_inicio:rango_fin].copy()
         
         if len(df_vista_mia) == 0:
-            st.success("🎉 ¡No hay casos pendientes en su tramo! Espere reasignación.")
+            st.success("¡No hay casos pendientes en su tramo! Espere reasignación.")
         else:
             df_vista_mia['✅ Gestión Cerrada'] = False
             df_vista_mia['📞 Llamada Fallida (No contesta)'] = False
