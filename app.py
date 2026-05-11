@@ -171,7 +171,7 @@ if st.session_state.df_operativo is not None:
                 disabled=['ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']
             )
 
-            if st.button("Procesar Cambios y Actualizar Mi Bandeja"):
+            if st.button("🔄 Sincronizar y Actualizar Bandeja"):
                 with st.spinner("Sincronizando con el servidor central de OPPLUS..."):
                     finalizados = df_editado[df_editado['✅ Gestión Cerrada'] == True]['ID_Cliente'].values
                     reintentos = df_editado[df_editado['📞 Llamada Fallida (No contesta)'] == True]['ID_Cliente'].values
