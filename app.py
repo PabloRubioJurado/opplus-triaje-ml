@@ -157,25 +157,34 @@ if st.session_state.df_operativo is not None:
         
         st.divider()
 
-        # --- NUEVA SECCIÓN: KPIs OBJETIVO DEL RETO ---
+       # --- NUEVA SECCIÓN: KPIs OBJETIVO DEL RETO ---
         st.markdown("#### Cumplimiento de KPIs Estratégicos (Objetivo OPPLUS)")
         kpi1, kpi2 = st.columns(2)
         
         # Cálculo KPI 1: % Gestionados antes de 60 días
         df_gestionados = st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == True]
+        
         if len(df_gestionados) > 0:
             gestionados_antes_60 = len(df_gestionados[df_gestionados['Dias_Impago'] <= 60])
             pct_antes_60 = (gestionados_antes_60 / len(df_gestionados)) * 100
+            
+            # Textos para las flechitas SOLO si ya hay datos
+            delta_kpi1 = "Monitorización en tiempo real"
+            delta_kpi2 = "Media de equipo activo"
         else:
             pct_antes_60 = 0.0
             
-        kpi1.metric("Visibilidad ANS: % Gestionados <= 60 días", f"{pct_antes_60:.1f} %", delta="Monitorización en tiempo real")
+            # Si no hay datos, ocultamos las flechitas
+            delta_kpi1 = None
+            delta_kpi2 = None
+            
+        kpi1.metric("Visibilidad ANS: % Gestionados <= 60 días", f"{pct_antes_60:.1f} %", delta=delta_kpi1)
         
         # Cálculo KPI 2: Productividad
         num_gestores = 4 # Plantilla base de simulación
         productividad = len(df_gestionados) / num_gestores
-        kpi2.metric("Productividad: Expedientes / Gestor / Día", f"{productividad:.1f}", delta="Media de equipo activo")
-
+        kpi2.metric("Productividad: Expedientes / Gestor / Día", f"{productividad:.1f}", delta=delta_kpi2)
+        
         st.divider()
 
         # 2. MEJORA VISUAL: Columnas con Gráfico y Tabla
