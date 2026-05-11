@@ -95,7 +95,7 @@ with st.sidebar:
 
 # --- BLOQUEO SI NO HAY USUARIO ---
 if st.session_state.usuario_actual is None:
-    st.info("👈 Por favor, inicie sesión en el menú lateral para acceder a su panel.")
+    st.info("⬅️ Por favor, inicie sesión en el menú lateral para acceder a su panel.")
     st.stop()
 
 
