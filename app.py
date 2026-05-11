@@ -128,7 +128,8 @@ if st.session_state.df_operativo is not None:
     pendientes_ahora = len(df_solo_pendientes)
 
     # ==========================================
-    # VISTA 1: EL DIRECTOR (DASHBOARD VISUAL)
+    # ==========================================
+    # VISTA 1: EL DIRECTOR
     # ==========================================
     if st.session_state.rol_actual == "Director":
         st.subheader("Cuadro de Mando Integral")
@@ -143,23 +144,46 @@ if st.session_state.df_operativo is not None:
         # Métricas principales
         c1, c2, c3, c4 = st.columns(4)
         c1.metric("Volumen Inicial", f"{total_datos:,}")
+        
         delta_p = f"-{gestionados_hoy} tramitados" if gestionados_hoy > 0 else None
         c2.metric("Pendiente de Gestión", f"{pendientes_ahora:,}", delta=delta_p)
+        
         capital_en_vuelo = df_solo_pendientes['Importe_Deuda'].sum()
         c3.metric("Riesgo Vivo Asignado", f"{capital_en_vuelo:,.0f} €")
+
         capital_liberado = st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == True]['Importe_Deuda'].sum()
         delta_exito = "Impacto Operativo" if capital_liberado > 0 else None
         c4.metric("Capital Liberado", f"{capital_liberado:,.0f} €", delta=delta_exito, delta_color="normal")
         
         st.divider()
 
+        # --- NUEVA SECCIÓN: KPIs OBJETIVO DEL RETO ---
+        st.markdown("#### Cumplimiento de KPIs Estratégicos (Objetivo OPPLUS)")
+        kpi1, kpi2 = st.columns(2)
+        
+        # Cálculo KPI 1: % Gestionados antes de 60 días
+        df_gestionados = st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == True]
+        if len(df_gestionados) > 0:
+            gestionados_antes_60 = len(df_gestionados[df_gestionados['Dias_Impago'] <= 60])
+            pct_antes_60 = (gestionados_antes_60 / len(df_gestionados)) * 100
+        else:
+            pct_antes_60 = 0.0
+            
+        kpi1.metric("Visibilidad ANS: % Gestionados <= 60 días", f"{pct_antes_60:.1f} %", delta="Monitorización en tiempo real")
+        
+        # Cálculo KPI 2: Productividad
+        num_gestores = 4 # Plantilla base de simulación
+        productividad = len(df_gestionados) / num_gestores
+        kpi2.metric("Productividad: Expedientes / Gestor / Día", f"{productividad:.1f}", delta="Media de equipo activo")
+
+        st.divider()
+
         # 2. MEJORA VISUAL: Columnas con Gráfico y Tabla
-        col_grafico, col_tabla = st.columns([1, 1]) # Dos columnas del mismo tamaño
+        col_grafico, col_tabla = st.columns([1, 1])
         
         with col_grafico:
             st.markdown("#### Concentración de Riesgo (Top 50 Críticos)")
             st.write("Visualización de la deuda de los casos con mayor Score de Urgencia.")
-            # Creamos un gráfico de barras rápido con los 50 peores
             df_grafico = df_solo_pendientes.head(50).set_index('ID_Cliente')['Importe_Deuda']
             st.bar_chart(df_grafico, color="#004481")
             
