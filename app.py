@@ -128,53 +128,78 @@ if st.session_state.df_operativo is not None:
     pendientes_ahora = len(df_solo_pendientes)
 
     # ==========================================
-    # VISTA 1: EL DIRECTOR
+    # VISTA 1: EL DIRECTOR (DASHBOARD VISUAL)
     # ==========================================
     if st.session_state.rol_actual == "Director":
-        st.subheader("📊 Dashboard Central de Supervisión")
-        st.divider()
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("Total Expedientes en Base", f"{total_datos:,}")
+        st.subheader("Cuadro de Mando Integral")
         
+        # 1. MEJORA VISUAL: Barra de progreso de la campaña
         gestionados_hoy = total_datos - pendientes_ahora
-        delta_p = f"-{gestionados_hoy} hoy" if gestionados_hoy > 0 else None
-        c2.metric("Pendientes de Gestión", f"{pendientes_ahora:,}", delta=delta_p)
+        porcentaje_avance = int((gestionados_hoy / total_datos) * 100) if total_datos > 0 else 0
+        st.progress(porcentaje_avance, text=f"Avance Global de la Jornada: {porcentaje_avance}%")
         
+        st.divider()
+        
+        # Métricas principales
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Volumen Inicial", f"{total_datos:,}")
+        delta_p = f"-{gestionados_hoy} tramitados" if gestionados_hoy > 0 else None
+        c2.metric("Pendiente de Gestión", f"{pendientes_ahora:,}", delta=delta_p)
         capital_en_vuelo = df_solo_pendientes['Importe_Deuda'].sum()
-        c3.metric("Riesgo Total Vivo", f"{capital_en_vuelo:,.0f} €")
-
+        c3.metric("Riesgo Vivo Asignado", f"{capital_en_vuelo:,.0f} €")
         capital_liberado = st.session_state.df_operativo[st.session_state.df_operativo['Gestionado_Hoy'] == True]['Importe_Deuda'].sum()
-        delta_exito = "¡Buen trabajo!" if capital_liberado > 0 else None
-        c4.metric("Capital Recuperado/Cerrado", f"{capital_liberado:,.0f} €", delta=delta_exito, delta_color="normal")
-        st.info("ℹ️ Los gestores están trabajando en sus respectivos tramos. Pulse descargar en el lateral para auditar el CSV.")
+        delta_exito = "Impacto Operativo" if capital_liberado > 0 else None
+        c4.metric("Capital Liberado", f"{capital_liberado:,.0f} €", delta=delta_exito, delta_color="normal")
+        
+        st.divider()
+
+        # 2. MEJORA VISUAL: Columnas con Gráfico y Tabla
+        col_grafico, col_tabla = st.columns([1, 1]) # Dos columnas del mismo tamaño
+        
+        with col_grafico:
+            st.markdown("#### Concentración de Riesgo (Top 50 Críticos)")
+            st.write("Visualización de la deuda de los casos con mayor Score de Urgencia.")
+            # Creamos un gráfico de barras rápido con los 50 peores
+            df_grafico = df_solo_pendientes.head(50).set_index('ID_Cliente')['Importe_Deuda']
+            st.bar_chart(df_grafico, color="#004481")
+            
+        with col_tabla:
+            st.markdown("#### Cola de Enrutamiento Activa")
+            st.write("Los gestores están recibiendo estos expedientes en tiempo real.")
+            st.dataframe(df_solo_pendientes[['ID_Cliente', 'Score_Urgencia', 'Importe_Deuda', 'Dias_Impago']].head(100), use_container_width=True)
 
     # ==========================================
-    # VISTA 2: LOS GESTORES
+    # VISTA 2: LOS GESTORES (PUESTO DE TRABAJO)
     # ==========================================
     else:
         rango_inicio, rango_fin = USUARIOS[st.session_state.usuario_actual]["rango"]
-        st.subheader(f"💼 Bandeja Operativa Asignada: Tramos del {rango_inicio} al {rango_fin}")
+        st.subheader(f"Bandeja Operativa: Tramo Asignado ({rango_inicio} - {rango_fin})")
+        
+        # 3. MEJORA VISUAL: Meta diaria del gestor (Gamificación)
+        st.info("Objetivo de Productividad Diario: Mantener la cola de su tramo despejada para asegurar el ANS de 60 días.")
         
         # Filtramos la tabla para que este gestor solo vea su tramo
         df_vista_mia = df_solo_pendientes.iloc[rango_inicio:rango_fin].copy()
         
         if len(df_vista_mia) == 0:
-            st.success("¡No hay casos pendientes en su tramo! Espere reasignación.")
+            st.success("Tramo operativo completado. Excelente trabajo. A la espera de nueva reasignación por parte del sistema.")
         else:
-            df_vista_mia['✅ Gestión Cerrada'] = False
-            df_vista_mia['📞 Llamada Fallida (No contesta)'] = False
+            df_vista_mia['Gestión Cerrada'] = False
+            df_vista_mia['Contacto Fallido'] = False
 
             df_editado = st.data_editor(
-                df_vista_mia[['✅ Gestión Cerrada', '📞 Llamada Fallida (No contesta)', 'ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
+                df_vista_mia[['Gestión Cerrada', 'Contacto Fallido', 'ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
                 use_container_width=True,
                 hide_index=True,
                 disabled=['ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']
             )
 
-            if st.button("🔄 Sincronizar y Actualizar Bandeja"):
-                with st.spinner("Sincronizando con el servidor central de OPPLUS..."):
-                    finalizados = df_editado[df_editado['✅ Gestión Cerrada'] == True]['ID_Cliente'].values
-                    reintentos = df_editado[df_editado['📞 Llamada Fallida (No contesta)'] == True]['ID_Cliente'].values
+            st.markdown("<br>", unsafe_allow_html=True) # Espaciado limpio
+
+            if st.button("Sincronizar Operaciones"):
+                with st.spinner("Sincronizando registros con el servidor central..."):
+                    finalizados = df_editado[df_editado['Gestión Cerrada'] == True]['ID_Cliente'].values
+                    reintentos = df_editado[df_editado['Contacto Fallido'] == True]['ID_Cliente'].values
 
                     for idx in st.session_state.df_operativo.index:
                         cid = st.session_state.df_operativo.at[idx, 'ID_Cliente']
@@ -183,6 +208,6 @@ if st.session_state.df_operativo is not None:
                         if cid in reintentos:
                             st.session_state.df_operativo.at[idx, 'Llamadas_Previas'] += 1
 
-                    st.toast("Bandeja actualizada. Trayendo nuevos casos...", icon="✅")
-                    time.sleep(2)
+                    st.toast("Operación registrada. Actualizando bandeja de trabajo.")
+                    time.sleep(1.5)
                 st.rerun()
