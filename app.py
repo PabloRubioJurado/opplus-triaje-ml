@@ -86,11 +86,13 @@ with st.sidebar:
             st.session_state.rol_actual = None
             st.rerun()
             
-        st.divider()
-        st.header("💾 Gestión de Progreso")
-        if st.session_state.df_operativo is not None:
-            csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
-            st.download_button(label="📥 Descargar Progreso", data=csv_data, file_name="progreso_global.csv", mime="text/csv")
+        # La descarga es un privilegio SOLO del Director
+        if st.session_state.rol_actual == "Director":
+            st.divider()
+            st.header("💾 Gestión de Progreso")
+            if st.session_state.df_operativo is not None:
+                csv_data = st.session_state.df_operativo.to_csv(index=False).encode('utf-8')
+                st.download_button(label="📥 Descargar CSV Maestro", data=csv_data, file_name="base_actualizada.csv", mime="text/csv")
 
 # --- BLOQUEO SI NO HAY USUARIO ---
 if st.session_state.usuario_actual is None:
