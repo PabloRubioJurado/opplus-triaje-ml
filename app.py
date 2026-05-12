@@ -203,7 +203,7 @@ if st.session_state.df_operativo is not None:
             
             # Línea modificada con hide_index=True
             st.dataframe(
-                df_solo_pendientes[['ID', 'Score_Urgencia', 'Prioridad_Banco', 'Importe_Deuda', 'Dias_Impago']].head(400), 
+                df_solo_pendientes[['ID_Cliente', 'Score_Urgencia', 'Prioridad_Banco', 'Importe_Deuda', 'Dias_Impago']].head(400), 
                 use_container_width=True, 
                 hide_index=True
             )
