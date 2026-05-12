@@ -230,7 +230,7 @@ if st.session_state.df_operativo is not None:
                 df_vista_mia[['Gestión Cerrada', 'Contacto Fallido', 'ID_Cliente', 'Score_Urgencia', 'Prioridad_Banco', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
                 use_container_width=True,
                 hide_index=True,
-                disabled=['ID_Cliente', 'Score_Urgencia', 'Prioridad_Banco', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago'] # Añádela aquí también
+                disabled=['ID', 'Score_Urgencia', 'Prioridad_Banco', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago'] # Añádela aquí también
             )
             
             st.markdown("<br>", unsafe_allow_html=True) # Espaciado limpio
