@@ -200,7 +200,8 @@ if st.session_state.df_operativo is not None:
         with col_tabla:
             st.markdown("#### Cola de Enrutamiento Activa")
             st.write("Los gestores están recibiendo estos expedientes en tiempo real.")
-            st.dataframe(df_solo_pendientes[['ID_Cliente', 'Score_Urgencia', 'Importe_Deuda', 'Dias_Impago']].head(400), use_container_width=True)
+            # Busca esta línea y cámbiala por esta:
+            st.dataframe(df_solo_pendientes[['ID_Cliente', 'Score_Urgencia', 'Prioridad_Banco', 'Importe_Deuda', 'Dias_Impago']].head(400), use_container_width=True)
 
     # ==========================================
     # VISTA 2: LOS GESTORES (PUESTO DE TRABAJO)
