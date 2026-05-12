@@ -34,9 +34,10 @@ def ejecutar_ia_triaje(df):
     df_entreno = df.copy()
     
     if 'Llego_a_Mora' not in df_entreno.columns:
-        # 1. Calculamos el riesgo base (Días e Importe)
-        base_riesgo = (df_entreno['Dias_Impago'] / 90) * 0.6 + \
-                      (df_entreno['Importe_Deuda'] / df_entreno['Importe_Deuda'].max()) * 0.4
+       # 1. Calculamos el riesgo base sumando TODO (Días, Importe y Prioridad)
+    base_riesgo = (df_entreno['Dias_Impago'] / 90) * 0.855 + \
+                  (df_entreno['Importe_Deuda'] / df_entreno['Importe_Deuda'].max()) * 0.098 + \
+                  (df_entreno['Prioridad_Banco'] / 3) * 0.047
         
         # 2. Aplicamos la regla de saturación (3 o más llamadas = hachazo)
         df_entreno['Saturado'] = df_entreno['Llamadas_Previas'] >= 3
