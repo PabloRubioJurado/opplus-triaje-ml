@@ -197,7 +197,7 @@ if st.session_state.df_operativo is not None:
             df_grafico = df_solo_pendientes.head(50).set_index('ID_Cliente')['Importe_Deuda']
             st.bar_chart(df_grafico, color="#004481")
             
-       with col_tabla:
+        with col_tabla:
             st.markdown("#### Cola de Enrutamiento Activa")
             st.write("Los gestores están recibiendo estos expedientes en tiempo real.")
             
