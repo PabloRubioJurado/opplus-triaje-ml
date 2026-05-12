@@ -223,12 +223,12 @@ if st.session_state.df_operativo is not None:
             df_vista_mia['Contacto Fallido'] = False
 
             df_editado = st.data_editor(
-                df_vista_mia[['Gestión Cerrada', 'Contacto Fallido', 'ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
+                df_vista_mia[['Gestión Cerrada', 'Contacto Fallido', 'ID_Cliente', 'Score_Urgencia', 'Prioridad_Banco', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']],
                 use_container_width=True,
                 hide_index=True,
-                disabled=['ID_Cliente', 'Score_Urgencia', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago']
+                disabled=['ID_Cliente', 'Score_Urgencia', 'Prioridad_Banco', 'Llamadas_Previas', 'Importe_Deuda', 'Dias_Impago'] # Añádela aquí también
             )
-
+            
             st.markdown("<br>", unsafe_allow_html=True) # Espaciado limpio
 
             if st.button("Sincronizar Operaciones"):
